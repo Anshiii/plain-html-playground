@@ -16,7 +16,7 @@ function randomString(e) {
 
 let bigJSON = { data: [] };
 
-for (let i = 0; i < 100000; i++) {
+for (let i = 0; i < 1000000; i++) {
   bigJSON.data.push({
     id: i,
     name: randomString(12),
