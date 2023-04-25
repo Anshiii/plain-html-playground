@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Big search</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+
+</head>
+
+<body>
+    <div id="root"></div>
+</body>
+
+<script type="text/babel" type="module">
+    function randomString(e) {
+        e = e || 32;
+        var t = "abcdefghijklmnopqrstuvwxyz",
+            a = t.length,
+            n = "";
+        for (let i = 0; i < e; i++) n += t.charAt(Math.floor(Math.random() * a));
+        return n;
+    }
+
+    let bigJSON = { data: [] };
+    for (let i = 0; i < 1000000; i++) {
+        bigJSON.data.push({
+            id: 0,
+            name: randomString(12),
+        });
+    }
+    const map = {}
+    function getNext(needle) {
+        if (map[needle]) return map[needle]
+        const next = [-1, 0];
+        let prefixLen = 0;
+        for (let i = 1; i < needle.length;) {
+            if (needle[i] === needle[prefixLen]) {
+                prefixLen++;
+                next.push(prefixLen);
+                i++;
+                continue;
+            }
+            if (prefixLen === 0) {
+                next.push(0);
+                i++;
+                continue;
+            }
+            prefixLen = next[prefixLen];
+        }
+        map[needle] = next
+        return next;
+    }
+    var strStr = function (haystack, needle) {
+        const next = getNext(needle);
+        for (let i = 0, j = 0; i < haystack.length; i++) {
+            while (j > 0 && haystack[i] != needle[j]) {
+                j = next[j];
+            }
+            if (haystack[i] === needle[j]) {
+                j++;
+                if (j === needle.length) {
+                    return i - j + 1;
+                }
+                continue;
+            }
+        }
+        return -1;
+    };
+
+
+    let start = 0, end1 = 0, end2 = 0;
+    const { createRoot } = ReactDOM;
+    const { useState, useEffect } = React;
+    const App = () => {
+        const [result, setResult] = useState([])
+        const [words, setWords] = useState()
+        const [info, setInfo] = useState('')
+        useEffect(() => {
+            if (!words) {
+                setResult([])
+                return
+            }
+            start = performance.now()
+            let newResult = bigJSON.data.filter(item => strStr(item.name, words) !== -1)
+            end1 = performance.now()
+            let newResult2 = bigJSON.data.filter(item => item.name.includes(words))
+            end2 = performance.now()
+
+
+            setResult(newResult)
+            setInfo(`关键词:${words},原始数据量:${bigJSON.data.length},结果数:${newResult.length},用时():${end1 - start}`)
+            console.log(`用时1---${end1 - start},用时2---${end2 - end1}`);
+        }, [words])
+
+
+
+        return <div>
+
+            <input type="text" onChange={(e) => {
+                setWords(e.target.value)
+            }} />{info}
+
+            <div>{result.slice(0, 10).map(item => <p>{item.name}</p>)}</div>
+        </div>
+    }
+
+
+    const root = createRoot(document.getElementById('root'));
+    root.render(<App />);
+
+
+</script>
+
+</html>
